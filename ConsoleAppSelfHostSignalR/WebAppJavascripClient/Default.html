@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>SignnalR simple chat </title>
+	<meta charset="utf-8" />
+    <style type="text/css">
+        .container {
+            background-color: #99CCFF;
+            border: thick solid #808080;
+            padding: 20px;
+            margin: 20px;
+
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <input type="text" id="message"/>
+        <input type="button" id="sendmessage" value="Send" />
+        <input type="hidden" id="displayname" />
+        <ul id="discussion"></ul>
+    </div>
+
+   <script src="Scripts/jquery-1.6.4.min.js"></script> 
+   <script src="Scripts/jquery.signalR-2.4.0.min.js"></script>  
+
+    <!--must copy the all javascript library from other project to this project -->
+
+    <script src="http://localhost:8099/signalr/hubs"></script> <!-- point to SignalR server hub -->
+
+    <script type="text/javascript">
+        $(function () {
+            $.connection.hub.url = "http://localhost:8099/signalr"; //check the last part ok because http://localhost:8099/signalr/hubs brings js file on chrome
+
+            // Declare a proxy to reference the hub.
+            var chat = $.connection.customHub;  //$.connection.myHub;
+
+            //create a function that the hub can call to broadcast mesg
+            
+            chat.client.addMessage = function (name, message) {
+                //html encode display name and message
+                var encodeName = $('<div/>').text(name).html();
+                var encodeMsg = $('<div/>').text(message).html();
+                //Add the message to the page
+                $('#discussion').append('<li><strong>' + encodeName + '<strong>: &nbsp;' + encodeMsg + '</li>');
+            }; //function ends
+            
+            // chat.client.addMessage = simpleLog; //works simple test by console log by commenting previous code block
+
+            //get the user name and store it to prepend to message
+            $('#displayname').val(prompt('Enter your name: ', ''));
+            //set initial focus to message input box.
+            $('#message').focus();
+            //start the connection
+            $.connection.hub.start().done(function () {
+                $('#sendmessage').click(function () {
+                    //call the Send method on the hub
+                    chat.server.send($('#displayname').val(), $('#message').val());
+                    //clear text box and reset focus for next comment
+                    $('#message').val('').focus();
+
+                });
+            }); //done
+
+        });
+
+        function simpleLog(name, msg) {
+            console.log('after roundtrip ' + name + ' ' + msg);
+        }
+
+    </script>
+
+</body>
+</html>
